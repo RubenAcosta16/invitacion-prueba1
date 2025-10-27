@@ -34,7 +34,7 @@ export default function App() {
           Alondra & Javier
         </p>
         <p className="font_bebasneue font-[400] text-2xl">
-          21 de noviembre de 2025
+          08 de noviembre de 2025
         </p>
         <p className="font_bebasneue font-[400] text-2xl">1:00 PM</p>
       </div>

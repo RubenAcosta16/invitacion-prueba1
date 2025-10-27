@@ -1,7 +1,7 @@
 import  { useState, useEffect } from "react";
 
 // Define la fecha y hora objetivo: 21 de noviembre de 2025 a las 13:00 (1:00 PM)
-const TARGET_DATE = new Date("2025-11-21T13:00:00");
+const TARGET_DATE = new Date("2025-11-08T13:00:00");
 
 // Función de utilidad para formatear la diferencia de tiempo
 const formatTime = (timeInMs: number) => {
