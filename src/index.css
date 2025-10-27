@@ -1,0 +1,29 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
+
+@import "tailwindcss";
+
+.font_poppins {
+  font-family: "Poppins", sans-serif;
+}
+
+.font_parisienne {
+  font-family: "Alex Brush", cursive;
+}
+
+.font_bebasneue {
+  font-family: "Bebas Neue", sans-serif;
+}
+
+.fondo_boda_1 {
+  background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0)),
+    url("boda1.jpg");
+  background-size: cover;
+  background-position: center;
+}
+
+.fondo_boda_2 {
+  background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.7)),
+    url("boda2.webp");
+  background-size: cover;
+  background-position: right;
+}
