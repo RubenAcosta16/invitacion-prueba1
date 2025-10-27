@@ -1,142 +1,137 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 
-export default function ImageStackSlider() {
-  const images = [
-    "boda1.jpg",
-    "boda3.jpg",
-    "boda5.webp",
-    "boda4.webp",
-    "boda6.webp",
-  ];
+const images = [
+  "boda1.jpg",
+  "boda3.jpg",
+  "boda5.webp",
+  "boda4.webp",
+  "boda6.webp",
+];
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
-  const [dragCurrent, setDragCurrent] = useState<{ x: number; y: number } | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
+export default function StackedCards() {
+  const [cards, setCards] = useState(images);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+  const [isResetting, setIsResetting] = useState(false);
 
-  const handleStart = (clientX: number, clientY: number) => {
-    setDragStart({ x: clientX, y: clientY });
-    setDragCurrent({ x: clientX, y: clientY });
-    setIsDragging(true);
+  const handleDragStart = (e: React.MouseEvent | React.TouchEvent, index: number) => {
+    if (index !== cards.length - 1) return;
+    
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    
+    setDraggedIndex(index);
+    setStartPos({ x: clientX, y: clientY });
   };
 
-  const handleMove = (clientX: number, clientY: number) => {
-    if (dragStart) {
-      setDragCurrent({ x: clientX, y: clientY });
-    }
+  const handleDragMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (draggedIndex === null) return;
+    
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    
+    setDragOffset({
+      x: clientX - startPos.x,
+      y: clientY - startPos.y
+    });
   };
 
-  const handleEnd = () => {
-    if (dragStart && dragCurrent) {
-      const diffX = dragCurrent.x - dragStart.x;
-      const threshold = 80;
-
-      if (Math.abs(diffX) > threshold) {
-        // Cualquier dirección = avanzar a la siguiente (la de abajo)
-        setCurrentIndex((prev) => (prev + 1) % images.length);
+  const handleDragEnd = () => {
+    if (draggedIndex === null) return;
+    
+    const threshold = 100;
+    
+    if (Math.abs(dragOffset.x) > threshold) {
+      // Remover la carta actual
+      const newCards = cards.slice(0, -1);
+      
+      if (newCards.length === 0) {
+        // Reiniciar todas las cartas con animación
+        setTimeout(() => {
+          setIsResetting(true);
+          setCards(images);
+          setTimeout(() => {
+            setIsResetting(false);
+          }, 600);
+        }, 300);
+      } else {
+        setCards(newCards);
       }
     }
     
-    setDragStart(null);
-    setDragCurrent(null);
-    setIsDragging(false);
+    setDraggedIndex(null);
+    setDragOffset({ x: 0, y: 0 });
+    setStartPos({ x: 0, y: 0 });
   };
 
-  const getDragTransform = () => {
-    if (!dragStart || !dragCurrent) return { x: 0, y: 0 };
-    return {
-      x: dragCurrent.x - dragStart.x,
-      y: dragCurrent.y - dragStart.y
-    };
-  };
-
-  const getRotation = () => {
-    const { x } = getDragTransform();
-    return x * 0.05;
-  };
-
-  const getVisibleImages = () => {
-    const visible = [];
-    for (let i = 0; i < 3; i++) {
-      const index = (currentIndex + i) % images.length;
-      visible.push({ src: images[index], offset: i });
-    }
-    return visible;
-  };
-
-  const getRandomOffset = (offset: number, seed: number) => {
-    // Genera desplazamientos "aleatorios" pero consistentes
-    const x = (seed * 7 + offset * 13) % 9 - 4;
-    const rotation = (seed * 5 + offset * 11) % 7 - 3;
-    return { x: x * 3, rotation: rotation * 1.5 };
-  };
+  const rotation = dragOffset.x * 0.1;
+  const opacity = 1 - Math.abs(dragOffset.x) / 400;
 
   return (
-    <div className="pt-20 pb-16 bg-white flex items-center justify-center p-4">
-      <div className="relative w-full max-w-md aspect-[3/4]">
-        {getVisibleImages().map(({ src, offset }) => {
-          const isTop = offset === 0;
-          const translateY = offset * 12;
-          const scale = 1 - offset * 0.05;
-          const opacity = 1 - offset * 0.3;
-          const drag = isTop && isDragging ? getDragTransform() : { x: 0, y: 0 };
-          const baseRotation = isTop && isDragging ? getRotation() : 0;
+    <div 
+      className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-100 to-pink-100"
+      onMouseMove={handleDragMove}
+      onMouseUp={handleDragEnd}
+      onTouchMove={handleDragMove}
+      onTouchEnd={handleDragEnd}
+    >
+      <div className="relative w-80 h-96">
+        {cards.map((image, index) => {
+          const isTop = index === cards.length - 1;
+          const isDragging = draggedIndex === index;
+          const scale = 1 - (cards.length - 1 - index) * 0.05;
+          const yOffset = (cards.length - 1 - index) * 10;
           
-          // Agregar desplazamiento "aleatorio" para cartas de abajo
-          const randomOffset = !isTop ? getRandomOffset(offset, currentIndex) : { x: 0, rotation: 0 };
-          const rotation = baseRotation + randomOffset.rotation;
-
           return (
             <div
-              key={`${src}-${offset}`}
-              className="absolute inset-0 cursor-grab active:cursor-grabbing"
+              key={`${image}-${index}`}
+              className={`absolute inset-0 cursor-grab active:cursor-grabbing select-none ${
+                isResetting ? 'animate-[slideIn_0.5s_ease-out]' : ''
+              }`}
               style={{
-                transform: `
-                  translateX(${drag.x + randomOffset.x}px) 
-                  translateY(${translateY + drag.y}px) 
-                  scale(${scale}) 
-                  rotate(${rotation}deg)
-                `,
-                zIndex: 10 - offset,
-                opacity: opacity,
-                transition: isDragging && isTop ? 'none' : 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                pointerEvents: isTop ? 'auto' : 'none'
+                transform: isDragging
+                  ? `translate(${dragOffset.x}px, ${dragOffset.y}px) rotate(${rotation}deg)`
+                  : `translateY(-${yOffset}px) scale(${scale})`,
+                opacity: isDragging ? opacity : 1,
+                transition: isDragging ? 'none' : 'all 0.3s ease-out',
+                zIndex: index,
+                pointerEvents: isTop ? 'auto' : 'none',
               }}
-              onMouseDown={(e) => isTop && handleStart(e.clientX, e.clientY)}
-              onMouseMove={(e) => isTop && handleMove(e.clientX, e.clientY)}
-              onMouseUp={() => isTop && handleEnd()}
-              onMouseLeave={() => isTop && handleEnd()}
-              onTouchStart={(e) => isTop && handleStart(e.touches[0].clientX, e.touches[0].clientY)}
-              onTouchMove={(e) => isTop && handleMove(e.touches[0].clientX, e.touches[0].clientY)}
-              onTouchEnd={() => isTop && handleEnd()}
+              onMouseDown={(e) => handleDragStart(e, index)}
+              onTouchStart={(e) => handleDragStart(e, index)}
             >
-              <div className="w-full h-full rounded-2xl shadow-2xl overflow-hidden bg-white border-[12px] border-white">
-                <img 
-                  src={src} 
-                  alt={`Imagen ${offset + 1}`}
-                  className="w-full h-full object-cover"
+              <div className="w-full h-full bg-white rounded-2xl shadow-2xl overflow-hidden">
+                <img
+                  src={image}
+                  alt={`Boda ${index + 1}`}
+                  className="w-full h-full object-cover pointer-events-none"
                   draggable="false"
                 />
               </div>
             </div>
           );
         })}
-
-        {/* Indicadores */}
-        {/* <div className="absolute -bottom-12 left-0 right-0 flex justify-center gap-2">
-          {images.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentIndex(index)}
-              className={`w-2 h-2 rounded-full transition-all ${
-                index === currentIndex 
-                  ? 'bg-gray-800 w-8' 
-                  : 'bg-gray-400 hover:bg-gray-600'
-              }`}
-            />
-          ))}
-        </div> */}
+        
+        {cards.length === 0 && !isResetting && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <p className="text-gray-500 text-lg">Reiniciando...</p>
+          </div>
+        )}
       </div>
+      
+      <style>{`
+        @keyframes slideIn {
+          from {
+            transform: translateY(100vh) scale(0.8);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 }
