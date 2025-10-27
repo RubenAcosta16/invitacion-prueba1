@@ -27,7 +27,7 @@ const arrayUbications = [
 
 export default function App() {
   return (
-    <div className="text-[#c07272]">
+    <div className="text-[#c07272] pb-16">
       {/* <div className="h-screen fondo_boda_1"></div> */}
       <div className="h-screen fondo_boda_2 flex flex-col justify-center items-center text-white  font_parisienne">
         <p className="pb-10 w-1/2 text-center text-6xl text-white">
