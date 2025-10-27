@@ -1,173 +1,142 @@
-import { useState, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState } from 'react';
 
-// Add interfaces/types at the top of the file
-interface CardTransform {
-  x: number;
-  y: number;
-  rotate: number;
-}
+export default function ImageStackSlider() {
+  const images = [
+    "boda1.jpg",
+    "boda3.jpg",
+    "boda5.webp",
+    "boda4.webp",
+    "boda6.webp",
+  ];
 
-const images = [
-  "boda1.jpg",
-  "boda3.jpg",
-  "boda5.webp",
-  "boda4.webp",
-  "boda6.webp",
-];
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
+  const [dragCurrent, setDragCurrent] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
-const CARD_STACK_SIZE = 4; // Número de cartas visibles en la pila
-const MAX_ROTATION = 12; 
-const MAX_OFFSET = 20; 
+  const handleStart = (clientX: number, clientY: number) => {
+    setDragStart({ x: clientX, y: clientY });
+    setDragCurrent({ x: clientX, y: clientY });
+    setIsDragging(true);
+  };
 
-// Generamos y almacenamos las transformaciones estáticas una sola vez
-const initialCardTransforms: CardTransform[] = images.map(() => ({
-  x: (Math.random() - 0.5) * MAX_OFFSET,
-  y: (Math.random() - 0.5) * MAX_OFFSET,
-  rotate: (Math.random() - 0.5) * MAX_ROTATION,
-}));
+  const handleMove = (clientX: number, clientY: number) => {
+    if (dragStart) {
+      setDragCurrent({ x: clientX, y: clientY });
+    }
+  };
 
-// Funciones de utilidad (sin cambios)
-const getNextIndex = (i: number, total: number): number => (i + 1) % total;
-const getPrevIndex = (i: number, total: number): number =>
-  (i - 1 + total) % total;
+  const handleEnd = () => {
+    if (dragStart && dragCurrent) {
+      const diffX = dragCurrent.x - dragStart.x;
+      const threshold = 80;
 
-// ⚡ OPTIMIZACIÓN CLAVE: Usamos la propiedad CSS 'will-change'
-// Esto le dice al navegador que esperamos animar estas propiedades,
-// permitiéndole optimizar la GPU por adelantado.
-const willChangeStyle = { willChange: "transform, opacity" };
+      if (Math.abs(diffX) > threshold) {
+        // Cualquier dirección = avanzar a la siguiente (la de abajo)
+        setCurrentIndex((prev) => (prev + 1) % images.length);
+      }
+    }
+    
+    setDragStart(null);
+    setDragCurrent(null);
+    setIsDragging(false);
+  };
 
-export default function PhotoDeckSlider() {
-  const [index, setIndex] = useState(0);
-  const [direction, setDirection] = useState<"left" | "right">("right"); // Tipado explícito
-  const threshold = 100;
+  const getDragTransform = () => {
+    if (!dragStart || !dragCurrent) return { x: 0, y: 0 };
+    return {
+      x: dragCurrent.x - dragStart.x,
+      y: dragCurrent.y - dragStart.y
+    };
+  };
 
-  const changeImage = (dir: "left" | "right"): void => {
-    setDirection(dir);
-    setTimeout(() => {
-      if (dir === "right") {
-        setIndex((prev) => getNextIndex(prev, images.length));
-      } else {
-        setIndex((prev) => getPrevIndex(prev, images.length));
-      }
-    }, 300);
-  };
+  const getRotation = () => {
+    const { x } = getDragTransform();
+    return x * 0.05;
+  };
 
-  const cardStack = useMemo(() => {
-    const stack = [];
-    for (let i = 0; i < CARD_STACK_SIZE; i++) {
-      const cardImageIndex = getNextIndex(index + i, images.length);
-      const isTopCard = i === 0;
-      const baseTransform = initialCardTransforms[cardImageIndex];
-      const positionFactor = 1 - i * 0.1;
+  const getVisibleImages = () => {
+    const visible = [];
+    for (let i = 0; i < 3; i++) {
+      const index = (currentIndex + i) % images.length;
+      visible.push({ src: images[index], offset: i });
+    }
+    return visible;
+  };
 
-      stack.push({
-        id: cardImageIndex,
-        src: images[cardImageIndex],
-        isTopCard: isTopCard,
-        x: baseTransform.x * positionFactor,
-        y: baseTransform.y * positionFactor,
-        rotate: baseTransform.rotate * positionFactor,
-        scale: 1 - i * 0.05,
-        opacity: 1 - i * 0.05,
-        zIndex: CARD_STACK_SIZE - i,
-      });
-    }
-    return stack;
-  }, [index]);
+  const getRandomOffset = (offset: number, seed: number) => {
+    // Genera desplazamientos "aleatorios" pero consistentes
+    const x = (seed * 7 + offset * 13) % 9 - 4;
+    const rotation = (seed * 5 + offset * 11) % 7 - 3;
+    return { x: x * 3, rotation: rotation * 1.5 };
+  };
 
-  return (
-    <div className="flex justify-center items-center h-[420px] rounded-lg shadow-inner">
-      <div className="relative w-64 h-64 select-none">
-        <AnimatePresence initial={false}>
-          {cardStack.map((card) => (
-            <motion.div
-              key={card.id}
-              className={`
-                absolute top-0 left-0 w-full h-full rounded-2xl overflow-hidden
-                border-8 border-white
-                ${
-                  card.isTopCard
-                    ? "shadow-2xl cursor-grab active:cursor-grabbing"
-                    : "shadow-md pointer-events-none"
-                }
-              `}
-                // ⚡ OPTIMIZACIÓN: Se añaden estilos de will-change
-              style={{ zIndex: card.zIndex, ...willChangeStyle }} 
-              initial={
-                // OPTIMIZACIÓN: Usar `transform` 3D para una mejor aceleración
-                card.isTopCard 
-                  ? {
-                      opacity: cardStack[1]?.opacity || 0.9,
-                      transform: `
-                        translateX(${cardStack[1]?.x || 0}px)
-                        translateY(${cardStack[1]?.y || 0}px)
-                        rotate(${cardStack[1]?.rotate || 0}deg)
-                        scale(${cardStack[1]?.scale || 0.9})
-                      `,
-                    }
-                  : {
-                      opacity: card.opacity,
-                      transform: `
-                        translateX(${card.x}px)
-                        translateY(${card.y}px)
-                        rotate(${card.rotate}deg)
-                        scale(${card.scale})
-                      `,
-                    }
-                }
-              animate={{
-                // OPTIMIZACIÓN: Animamos solo `transform` y `opacity`
-                opacity: card.opacity,
+  return (
+    <div className="pt-20 pb-16 bg-white flex items-center justify-center p-4">
+      <div className="relative w-full max-w-md aspect-[3/4]">
+        {getVisibleImages().map(({ src, offset }) => {
+          const isTop = offset === 0;
+          const translateY = offset * 12;
+          const scale = 1 - offset * 0.05;
+          const opacity = 1 - offset * 0.3;
+          const drag = isTop && isDragging ? getDragTransform() : { x: 0, y: 0 };
+          const baseRotation = isTop && isDragging ? getRotation() : 0;
+          
+          // Agregar desplazamiento "aleatorio" para cartas de abajo
+          const randomOffset = !isTop ? getRandomOffset(offset, currentIndex) : { x: 0, rotation: 0 };
+          const rotation = baseRotation + randomOffset.rotation;
+
+          return (
+            <div
+              key={`${src}-${offset}`}
+              className="absolute inset-0 cursor-grab active:cursor-grabbing"
+              style={{
                 transform: `
-                  translateX(${card.x}px)
-                  translateY(${card.y}px)
-                  rotate(${card.rotate}deg)
-                  scale(${card.scale})
+                  translateX(${drag.x + randomOffset.x}px) 
+                  translateY(${translateY + drag.y}px) 
+                  scale(${scale}) 
+                  rotate(${rotation}deg)
                 `,
-                transition: { duration: 0.3, ease: "easeOut" },
-              }}
-              exit={
-                card.isTopCard
-                  ? {
-                        // Usamos transform 3D en el exit
-                      transform: direction === "right" 
-                            ? `translateX(400px) rotate(25deg) scale(0.8)` 
-                            : `translateX(-400px) rotate(-25deg) scale(0.8)`,
-                      opacity: 0,
-                      transition: { duration: 0.3 },
-                    }
-                  : undefined
-              }
-              drag={card.isTopCard ? "x" : false}
-              dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-              dragElastic={0.4}
-              onDragEnd={
-                // ... (sin cambios)
-                (_, info) => {
-                if (info.offset.x < -threshold) changeImage("left");
-                else if (info.offset.x > threshold) changeImage("right");
-              }
-            }
-              whileDrag={
-                card.isTopCard
-                  ? {
-                      scale: 1.05,
-                      rotate: (Math.random() - 0.5) * 10,
-                    }
-                  : undefined
-              }
-            >
-              <img
-                src={card.src}
-                alt={`photo-${card.id}`}
-                className="w-full h-full object-cover"
-                draggable={false}
-              />
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
-    </div>
-  );
+                zIndex: 10 - offset,
+                opacity: opacity,
+                transition: isDragging && isTop ? 'none' : 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                pointerEvents: isTop ? 'auto' : 'none'
+              }}
+              onMouseDown={(e) => isTop && handleStart(e.clientX, e.clientY)}
+              onMouseMove={(e) => isTop && handleMove(e.clientX, e.clientY)}
+              onMouseUp={() => isTop && handleEnd()}
+              onMouseLeave={() => isTop && handleEnd()}
+              onTouchStart={(e) => isTop && handleStart(e.touches[0].clientX, e.touches[0].clientY)}
+              onTouchMove={(e) => isTop && handleMove(e.touches[0].clientX, e.touches[0].clientY)}
+              onTouchEnd={() => isTop && handleEnd()}
+            >
+              <div className="w-full h-full rounded-2xl shadow-2xl overflow-hidden bg-white border-[12px] border-white">
+                <img 
+                  src={src} 
+                  alt={`Imagen ${offset + 1}`}
+                  className="w-full h-full object-cover"
+                  draggable="false"
+                />
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Indicadores */}
+        {/* <div className="absolute -bottom-12 left-0 right-0 flex justify-center gap-2">
+          {images.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentIndex(index)}
+              className={`w-2 h-2 rounded-full transition-all ${
+                index === currentIndex 
+                  ? 'bg-gray-800 w-8' 
+                  : 'bg-gray-400 hover:bg-gray-600'
+              }`}
+            />
+          ))}
+        </div> */}
+      </div>
+    </div>
+  );
 }
