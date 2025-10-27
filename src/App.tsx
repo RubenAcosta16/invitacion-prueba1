@@ -1,7 +1,6 @@
-import React from "react";
+
 import TinderCardSlider from "./components/PicturesSlider";
 import CountdownTimer from "./components/CountdownTimer";
-import { time } from "framer-motion";
 
 const arrayUbications = [
   {

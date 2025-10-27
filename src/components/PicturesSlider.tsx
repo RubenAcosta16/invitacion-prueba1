@@ -1,6 +1,13 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+// Add interfaces/types at the top of the file
+interface CardTransform {
+  x: number;
+  y: number;
+  rotate: number;
+}
+
 const images = [
   "boda1.jpg",
   "boda3.jpg",
@@ -14,22 +21,23 @@ const MAX_ROTATION = 12; // 🚀 AUMENTADO: Máxima rotación aleatoria (antes 6
 const MAX_OFFSET = 20; // 🚀 AUMENTADO: Máximo desplazamiento aleatorio en px (antes 12)
 
 // Generamos y almacenamos las transformaciones estáticas una sola vez
-const initialCardTransforms = images.map(() => ({
+const initialCardTransforms: CardTransform[] = images.map(() => ({
   x: (Math.random() - 0.5) * MAX_OFFSET,
   y: (Math.random() - 0.5) * MAX_OFFSET,
   rotate: (Math.random() - 0.5) * MAX_ROTATION,
 }));
 
 // Funciones de utilidad (sin cambios)
-const getNextIndex = (i, total) => (i + 1) % total;
-const getPrevIndex = (i, total) => (i - 1 + total) % total;
+const getNextIndex = (i: number, total: number): number => (i + 1) % total;
+const getPrevIndex = (i: number, total: number): number =>
+  (i - 1 + total) % total;
 
 export default function PhotoDeckSlider() {
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState("right");
   const threshold = 100;
 
-  const changeImage = (dir) => {
+  const changeImage = (dir: "left" | "right"): void => {
     setDirection(dir);
     setTimeout(() => {
       if (dir === "right") {
@@ -116,14 +124,10 @@ export default function PhotoDeckSlider() {
               drag={card.isTopCard ? "x" : false}
               dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
               dragElastic={0.4}
-              onDragEnd={
-                card.isTopCard
-                  ? (_, info) => {
-                      if (info.offset.x < -threshold) changeImage("left");
-                      else if (info.offset.x > threshold) changeImage("right");
-                    }
-                  : undefined
-              }
+              onDragEnd={(_, info) => {
+                if (info.offset.x < -threshold) changeImage("left");
+                else if (info.offset.x > threshold) changeImage("right");
+              }}
               whileDrag={
                 card.isTopCard
                   ? {

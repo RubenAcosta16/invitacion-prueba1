@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import  { useState, useEffect } from "react";
 
 // Define la fecha y hora objetivo: 21 de noviembre de 2025 a las 13:00 (1:00 PM)
 const TARGET_DATE = new Date("2025-11-21T13:00:00");
 
 // Función de utilidad para formatear la diferencia de tiempo
-const formatTime = (timeInMs) => {
+const formatTime = (timeInMs: number) => {
   if (timeInMs <= 0)
     return { days: 0, hours: 0, minutes: 0, seconds: 0, isFinished: true };
 
@@ -68,7 +68,7 @@ export default function CountdownTimer() {
 }
 
 // Sub-componente para mostrar una unidad de tiempo
-const TimeBox = ({ value, label }) => (
+const TimeBox = ({ value, label }: { value: number; label: string }) => (
   <div className="">
     <div className="py-2 bg-white rounded-lg shadow-md w-[72px]">
       <p className="text-2xl font_parisienne font-medium text-gray-900">
