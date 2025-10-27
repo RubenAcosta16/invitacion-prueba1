@@ -62,7 +62,7 @@ export default function App() {
           </p>
           <iframe
             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d6997.411857697112!2d-106.13178938627243!3d28.72833314080727!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x86ea418555ce6cf3%3A0x5f3968d0303bdb3c!2sParroquia%20San%20Pablo%20Ap%C3%B3stol!5e0!3m2!1ses!2smx!4v1761535142112!5m2!1ses!2smx"
-            width="600"
+            
             height="450"
             style={{ border: 0 }}
             allowFullScreen
@@ -84,7 +84,6 @@ export default function App() {
           </p>
           <iframe
             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d6997.410611152356!2d-106.13178938728518!3d28.72835176218534!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x86ea4190504ab50f%3A0xa007c6f2d9b842d4!2sHacienda%20El%20Mestizo!5e0!3m2!1ses!2smx!4v1761535514625!5m2!1ses!2smx"
-            width="600"
             height="450"
             style={{ border: 0 }}
             allowFullScreen
