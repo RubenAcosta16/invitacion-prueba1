@@ -70,7 +70,7 @@ export default function StackedCards() {
 
   return (
     <div 
-      className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-100 to-pink-100"
+      className="flex items-center justify-center pt-20 pb-16 "
       onMouseMove={handleDragMove}
       onMouseUp={handleDragEnd}
       onTouchMove={handleDragMove}
